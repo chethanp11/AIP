@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIP — AIM Intelligence Platform</title>
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Vega-Lite Chart Rendering Engines -->
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- Analyst Login Screen -->
+  <div id="auth-login-screen" class="login-screen">
+    <div class="login-card-container">
+      <div class="login-brand">
+        <span class="login-logo">▲</span>
+        <h2>AIM Intelligence Platform</h2>
+        <p>Banking Analytics Operating System (AIP)</p>
+      </div>
+      
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="login-username">Analyst Username:</label>
+          <input type="text" id="login-username" value="analyst" required />
+        </div>
+        <div class="form-group">
+          <label for="login-password">Analyst Password:</label>
+          <input type="password" id="login-password" value="password" required />
+        </div>
+        <div class="login-error-message hide" id="login-error-msg"></div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">Authenticate & Access OS</button>
+      </form>
+      
+      <div class="login-card-footer">
+        Tenant ID: 994821 | Core Security Layer Active
+      </div>
+    </div>
+  </div>
+
+  <!-- Unified Shell Layout (hidden by default until auth) -->
+  <div class="app-container hide" id="main-app-shell">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-logo">▲</span>
+        <span class="brand-text">AIP Intelligence</span>
+      </div>
+      
+      <!-- Secure API Key Console -->
+      <div class="api-key-console">
+        <label for="api-key-input">🔒 Banking API Key:</label>
+        <input type="password" id="api-key-input" placeholder="AIP-BANK-..." />
+        <span class="api-key-status" id="api-key-status-indicator">🔴 Disconnected</span>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-page="home">
+          <span class="nav-icon">📊</span> Dashboard Home
+        </a>
+        <div class="nav-section-title">Suites</div>
+        <a href="#" class="nav-item" data-page="reporting">
+          <span class="nav-icon">📰</span> Reporting Suite
+        </a>
+        <a href="#" class="nav-item" data-page="analytics">
+          <span class="nav-icon">📈</span> Business Analytics
+        </a>
+        <a href="#" class="nav-item" data-page="automation">
+          <span class="nav-icon">⚡</span> Workflow Automation
+        </a>
+        <a href="#" class="nav-item" data-page="data-science">
+          <span class="nav-icon">🧪</span> Data Science & ML
+        </a>
+        <div class="nav-section-title">Knowledge & System</div>
+        <a href="#" class="nav-item" data-page="kms">
+          <span class="nav-icon">📚</span> KMS Workspace
+        </a>
+        <a href="#" class="nav-item" data-page="registry">
+          <span class="nav-icon">⚙️</span> Shared Capabilities
+        </a>
+        <a href="#" class="nav-item" data-page="logs">
+          <span class="nav-icon">📜</span> System Audit Logs
+        </a>
+      </nav>
+      
+      <!-- Shared Authentication Placeholder -->
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar">AP</div>
+          <div class="user-info">
+            <div class="user-name">Analytics Pro</div>
+            <div class="user-role">Tenant ID: 994821</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Canvas -->
+    <main class="main-canvas">
+      
+      <!-- Shared Header -->
+      <header class="app-header">
+        <div class="header-search">
+          <input type="text" id="global-search-input" placeholder="Search metric glossary, terms, playbooks...">
+          <button id="global-search-btn">Search KMS</button>
+        </div>
+        <div class="header-status">
+          <span class="status-indicator"></span> Platform Core: Operational
+        </div>
+      </header>
+
+      <div class="scrollable-content">
+        <!-- Auth Lock Overlay -->
+        <div id="auth-lock-overlay" class="auth-lock-overlay">
+          <div class="lock-card">
+            <span class="lock-icon">🔒</span>
+            <h3>Banking Agentic OS Locked</h3>
+            <p>Authorization Required: Enter a Bearer Token starting with <code>AIP-</code> in the Sidebar to authorize specialized Banking AI Agents and enable live ledger simulations.</p>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- 1. HOME DASHBOARD VIEW -->
+        <!-- ========================================== -->
+        <section id="page-home" class="page-view active">
+          <div class="hero-card">
+            <h1>AIM Intelligence Operating Layer</h1>
+            <p>A unified enterprise analytics platform. Ground metrics calculations, orchestrate stateful automated workflows, rationalise report duplication index arrays, and monitor prediction drifts inside a single governed analytics ecosystem.</p>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-value" id="stats-caps-count">8</div>
+              <div class="stat-label">Active Capabilities</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stats-logs-count">0</div>
+              <div class="stat-label">Total Execution Logs</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">100%</div>
+              <div class="stat-label">Capability Reuse Rate</div>
+            </div>
+          </div>
+
+          <h2 class="section-title">Explore Modular Application Suites</h2>
+          <div class="product-grid">
+            <div class="product-card" onclick="switchPage('reporting')">
+              <div class="product-icon">📰</div>
+              <h3>Reporting Suite</h3>
+              <p>Audit catalog indexes in PRISM, co-write standard summaries, Conversational BI, and proactive metrics anomaly feeds.</p>
+            </div>
+            <div class="product-card" onclick="switchPage('analytics')">
+              <div class="product-icon">📈</div>
+              <h3>Business Analytics</h3>
+              <p>Discover segment micro-trends, RCA driver contribution charts, dynamic Monte Carlo sliders, and board-tailored storytelling.</p>
+            </div>
+            <div class="product-card" onclick="switchPage('automation')">
+              <div class="product-icon">⚡</div>
+              <h3>Workflow Automation</h3>
+              <p>Design trigger-based pipelines, sequence orchestrations, track approval checkpoints, and observe telemetry histories.</p>
+            </div>
+            <div class="product-card" onclick="switchPage('data-science')">
+              <div class="product-icon">🧪</div>
+              <h3>Data Science & ML</h3>
+              <p>Profile dataset prep nulls, compare model experimental ROC scores, download governance booklets, and monitor concept drift.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 2. REPORTING SUITE VIEW (4 PRODUCTS) -->
+        <!-- ========================================== -->
+        <section id="page-reporting" class="page-view">
+          <div class="suite-header">
+            <h2>Reporting Suite Workspace</h2>
+            <p>Modernize reporting lifecycles and reduce operational reporting duplication overhead.</p>
+          </div>
+
+          <!-- Product Sub-nav Tabs -->
+          <div class="suite-tabs">
+            <button class="tab-btn active" onclick="switchSubProduct('reporting', 'prism')">PRISM (Rationalize)</button>
+            <button class="tab-btn" onclick="switchSubProduct('reporting', 'builder')">Report Building</button>
+            <button class="tab-btn" onclick="switchSubProduct('reporting', 'bi')">Conversational BI</button>
+            <button class="tab-btn" onclick="switchSubProduct('reporting', 'proactive')">Proactive Insights</button>
+          </div>
+
+          <!-- Product 1: PRISM -->
+          <div id="subproduct-reporting-prism" class="subproduct-panel active">
+            <div class="card">
+              <h3>PRISM: Reporting Rationalization</h3>
+              <p class="card-subtitle">PRISM analyzes reporting ecosystems to identify duplicate reports, overlapping metrics, low-value reporting assets, redundant reporting logic, and optimization opportunities. It helps analytics teams simplify reporting inventory by understanding report usage patterns, downstream dependencies, ownership, business criticality, and content similarity. The objective is to reduce reporting sprawl, improve maintainability, lower operational overhead, and ensure reporting environments remain streamlined and valuable.</p>
+              
+              <button class="btn btn-secondary" id="prism-run-btn">Audit and Rationalize Catalog</button>
+
+              <div class="prism-results-container hide" id="prism-results-panel">
+                <div class="success-alert">PRISM Rationalization Completed! Overlaps mapped to KMS definitions.</div>
+                
+                <div class="row-layout">
+                  <div class="card-column" style="flex: 1.5;">
+                    <div class="result-card">
+                      <h5>📊 Identified Deletion & Consolidation Targets</h5>
+                      <div class="table-wrapper" style="margin-top: 12px;">
+                        <table class="prism-table" id="prism-table-body">
+                          <!-- Loaded dynamically -->
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card-column">
+                    <div class="result-card bg-light">
+                      <h5>💡 AIP Optimization Recommendations</h5>
+                      <ul class="recom-list" id="prism-recom-list">
+                        <!-- Loaded dynamically -->
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 2: Report Building -->
+          <div id="subproduct-reporting-builder" class="subproduct-panel">
+            <div class="card">
+              <h3>Reports & Briefings Workspace</h3>
+              <p class="card-subtitle">Report Building accelerates report creation by assisting analytics professionals through report design, metric selection, visualization generation, narrative construction, formatting standards, validation checks, and quality enforcement. The application helps teams create consistent, business-friendly reporting outputs faster while reducing manual effort and ensuring reporting standards are maintained across analytical organizations.</p>
+              
+              <div class="row-layout">
+                <!-- Column 1: Access 4 Pre-Compiled Sample Reports -->
+                <div class="card-column" style="flex: 0.8; border-right: 1px solid var(--border-color); padding-right: 20px;">
+                  <h4 style="font-family: var(--font-display); font-size: 13px; font-weight: 600; text-transform: uppercase; margin-bottom: 12px; color: var(--text-secondary);">📁 Pre-Compiled Sample Reports (Access)</h4>
+                  <div class="reports-directory" style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="btn btn-secondary text-left w-100 sample-report-btn" data-report="nim" style="justify-content: flex-start; padding: 10px; font-size: 12px; text-transform: none; text-align: left; display: flex; gap: 8px; width: 100%;">
+                      📊 1. NIM Optimization Analysis Report
+                    </button>
+                    <button class="btn btn-secondary text-left w-100 sample-report-btn" data-report="lcr" style="justify-content: flex-start; padding: 10px; font-size: 12px; text-transform: none; text-align: left; display: flex; gap: 8px; width: 100%;">
+                      💧 2. Liquidity Coverage Ratio (LCR) Audit
+                    </button>
+                    <button class="btn btn-secondary text-left w-100 sample-report-btn" data-report="npl" style="justify-content: flex-start; padding: 10px; font-size: 12px; text-transform: none; text-align: left; display: flex; gap: 8px; width: 100%;">
+                      🚨 3. Credit Risk & NPL Concentrations
+                    </button>
+                    <button class="btn btn-secondary text-left w-100 sample-report-btn" data-report="efficiency" style="justify-content: flex-start; padding: 10px; font-size: 12px; text-transform: none; text-align: left; display: flex; gap: 8px; width: 100%;">
+                      🏢 4. Branch Operating Efficiency Report
+                    </button>
+                  </div>
+                  
+                  <h4 style="font-family: var(--font-display); font-size: 13px; font-weight: 600; text-transform: uppercase; margin-top: 24px; margin-bottom: 12px; color: var(--text-secondary);">⚡ Create New Custom Report</h4>
+                  <div class="builder-form">
+                    <div class="form-group">
+                      <label>Metric KPI Target:</label>
+                      <select id="rep-metric-id">
+                        <option value="net_interest_margin">Net Interest Margin (NIM)</option>
+                        <option value="npl_ratio">Non-Performing Loans (NPL) Ratio</option>
+                        <option value="loan_to_deposit_ratio">Loan-to-Deposit Ratio (LDR)</option>
+                        <option value="banking_card_cac">Credit Card Acquisition Cost (CAC)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Value:</label>
+                      <input type="number" id="rep-value" value="3.65">
+                    </div>
+                    <div class="form-group">
+                      <label>Baseline:</label>
+                      <input type="number" id="rep-compare" value="3.15">
+                    </div>
+                    <div class="form-group">
+                      <label>Briefing Requirements Notes:</label>
+                      <textarea id="rep-note" placeholder="E.g., Pivot commercial loan focus..." style="height: 60px;"></textarea>
+                    </div>
+                    <button class="btn w-100" id="build-report-btn">Compile HTML Report</button>
+                  </div>
+                </div>
+
+                <!-- Column 2: HTML Visual Report Render Canvas -->
+                <div class="card-column">
+                  <div class="report-preview-box">
+                    <div class="audit-badges-row" style="margin-bottom: 8px;">
+                      <span class="audit-badge" id="badge-standards">Standards: Awaiting</span>
+                      <span class="audit-badge" id="badge-quality">Quality Check: Awaiting</span>
+                    </div>
+                    <div class="html-report-preview" id="report-output-preview" style="background-color: #fafafa; padding: 4px; border-radius: 8px; border: 1px dashed var(--border-color); height: 480px; overflow-y: auto;">
+                      <div class="placeholder-msg" style="margin-top: 150px;">Select a Pre-Compiled Report from the left column, or compile a new custom HTML report dynamically.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 3: Conversational BI -->
+          <div id="subproduct-reporting-bi" class="subproduct-panel">
+            <div class="card">
+              <h3>Conversational BI Assistant</h3>
+              <p class="card-subtitle">Conversational BI allows users to interact with enterprise analytics through natural language questions instead of navigating dashboards manually. Users can ask business questions, request KPI explanations, explore trends, understand metric movement, drill into analytical results, and retrieve insights conversationally. The objective is to improve analytics accessibility and reduce friction between business questions and analytical answers.</p>
+              
+              <div class="chat-container">
+                <div class="chat-messages" id="bi-chat-box">
+                  <div class="message system">KMS grounded routing operational. Type: "Review revenue trends", "Audit profit metrics", or "Scan CAC".</div>
+                </div>
+                <div class="chat-input-row">
+                  <input type="text" id="bi-chat-input" placeholder="Ask about metrics trends...">
+                  <button id="bi-chat-send-btn">Submit</button>
+                </div>
+              </div>
+
+              <div class="chart-box hide" id="bi-chart-box">
+                <h4>Dynamic Vega-Lite Speccing (LINE CHART)</h4>
+                <div id="bi-line-chart"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 4: Proactive Insights -->
+          <div id="subproduct-reporting-proactive" class="subproduct-panel">
+            <div class="card">
+              <div class="row-layout" style="align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                <h3>Proactive Insights Alerts Feed</h3>
+                <button class="btn btn-secondary btn-sm" id="proactive-refresh-btn">Scan Operational Streams</button>
+              </div>
+              <p class="card-subtitle">Proactive Insights continuously monitors analytical signals to surface emerging patterns, unusual behavior, trend changes, and business opportunities before users explicitly search for them. Rather than waiting for users to discover problems manually, the application proactively identifies meaningful movement in business indicators and provides contextual recommendations, enabling organizations to move from reactive analytics to intelligence-driven operations.</p>
+
+              <div class="alerts-feed-container" id="proactive-alerts-list">
+                <div class="placeholder-msg">Click 'Scan Operational Streams' above to trigger statistical threshold audits.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 3. BUSINESS ANALYTICS SUITE (4 PRODUCTS) -->
+        <!-- ========================================== -->
+        <section id="page-analytics" class="page-view">
+          <div class="suite-header">
+            <h2>Business Analytics Workspace</h2>
+            <p>Accelerate diagnostic execution and reduce manual analytical overhead.</p>
+          </div>
+
+          <div class="suite-tabs">
+            <button class="tab-btn active" onclick="switchSubProduct('analytics', 'discovery')">Insight Discovery</button>
+            <button class="tab-btn" onclick="switchSubProduct('analytics', 'rca')">Root Cause Analysis</button>
+            <button class="tab-btn" onclick="switchSubProduct('analytics', 'whatif')">What-if simulation</button>
+            <button class="tab-btn" onclick="switchSubProduct('analytics', 'narratives')">Business Narratives</button>
+          </div>
+
+          <!-- Product 1: Insight Discovery -->
+          <div id="subproduct-analytics-discovery" class="subproduct-panel active">
+            <div class="card">
+              <h3>Insight Discovery: Demographic Trends Surfacing</h3>
+              <p class="card-subtitle">Insight Discovery helps analytics professionals identify meaningful trends, relationships, patterns, and opportunities within analytical datasets. It supports exploratory analytics by surfacing potentially important findings automatically, accelerating the process of identifying business signals that may require deeper investigation. The objective is to reduce manual discovery effort and increase analytical productivity.</p>
+              
+              <button class="btn" id="run-discovery-btn">Surface Segment Insights</button>
+
+              <div class="discovery-results hide" id="discovery-results-panel" style="margin-top: 20px;">
+                <h4>High-Impact surfaced segment trends:</h4>
+                <div class="product-grid" id="discovery-cards-grid" style="margin-top: 12px;">
+                  <!-- Dynamic cards -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 2: RCA -->
+          <div id="subproduct-analytics-rca" class="subproduct-panel">
+            <div class="card">
+              <h3>Root Cause Analysis (RCA) Diagnostic</h3>
+              <p class="card-subtitle">Root Cause Analysis helps analysts systematically identify drivers behind business outcomes by decomposing metrics, isolating contributing factors, and evaluating relationships across analytical variables. Instead of manually exploring multiple hypotheses, users receive structured guidance toward likely contributors, enabling faster understanding of performance changes and improving analytical consistency.</p>
+              
+              <div class="rca-controls">
+                <label>Target Audit Metric:</label>
+                <select id="rca-metric-select">
+                  <option value="net_interest_margin">Net Interest Margin (NIM) Compression</option>
+                  <option value="npl_ratio">Non-Performing Loans (NPL) Risk Surge</option>
+                </select>
+                <button class="btn" id="rca-run-btn">Decompose Drivers</button>
+              </div>
+
+              <div class="rca-results hide" id="rca-results-panel">
+                <div class="row-layout">
+                  <div class="card-column">
+                    <div class="result-card">
+                      <h5>Profiling metadata</h5>
+                      <p id="rca-prof-text" class="bold"></p>
+                    </div>
+                    <div class="result-card" style="margin-top: 16px;">
+                      <h5>Segments contribution</h5>
+                      <div class="driver-bar-container" id="rca-bars"></div>
+                    </div>
+                  </div>
+                  <div class="card-column">
+                    <div class="result-card bg-light">
+                      <h5>Grounded RCA narrative output</h5>
+                      <div id="rca-narrative" class="markdown-preview"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 3: What-if Simulation -->
+          <div id="subproduct-analytics-whatif" class="subproduct-panel">
+            <div class="card">
+              <h3>What-if Analysis: Metric Simulation Sandbox</h3>
+              <p class="card-subtitle">What-if Analysis enables users to simulate alternative scenarios and evaluate how business outcomes may change under different assumptions. Users can adjust inputs, constraints, thresholds, or business variables and observe projected analytical impact. The objective is to support decision-making by helping organizations understand potential future outcomes before operational actions are taken.</p>
+              
+              <div class="row-layout">
+                <!-- Sliders Controls -->
+                <div class="card-column" style="flex: 1.2;">
+                  <div class="sliders-box">
+                    <div class="slider-group">
+                      <div class="slider-header">
+                        <label>Average Loan Rate (%):</label>
+                        <span id="val-loan-rate" class="bold">6.5%</span>
+                      </div>
+                      <input type="range" id="slide-loan-rate" min="1.0" max="15.0" step="0.1" value="6.5">
+                    </div>
+
+                    <div class="slider-group">
+                      <div class="slider-header">
+                        <label>Average Deposit Rate (%):</label>
+                        <span id="val-deposit-rate" class="bold">2.5%</span>
+                      </div>
+                      <input type="range" id="slide-deposit-rate" min="0.1" max="8.0" step="0.1" value="2.5">
+                    </div>
+
+                    <div class="slider-group">
+                      <div class="slider-header">
+                        <label>Assets Under Management ($B):</label>
+                        <span id="val-assets" class="bold">10.0</span>
+                      </div>
+                      <input type="range" id="slide-assets" min="1.0" max="50.0" step="0.5" value="10.0">
+                    </div>
+
+                    <div class="slider-group">
+                      <div class="slider-header">
+                        <label>Default (NPL) Rate (%):</label>
+                        <span id="val-npl-rate" class="bold">1.5%</span>
+                      </div>
+                      <input type="range" id="slide-npl-rate" min="0.1" max="10.0" step="0.1" value="1.5">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Simulation Output -->
+                <div class="card-column">
+                  <div class="simulation-outputs-panel">
+                    <h4>Calculated KMS Projected Outputs</h4>
+                    
+                    <div class="sim-stat">
+                      <span class="label">Projected Net Interest Margin (NIM)</span>
+                      <span class="value" id="sim-nim" style="color: var(--primary-color); font-weight: 700; font-size: 24px;">3.60%</span>
+                    </div>
+
+                    <div class="sim-grid">
+                      <div class="sim-stat">
+                        <span class="label">Projected Interest Revenue</span>
+                        <span class="value" id="sim-interest-revenue">$552,500,000</span>
+                      </div>
+                      <div class="sim-stat">
+                        <span class="label">Projected Interest Expense</span>
+                        <span class="value" id="sim-interest-expense">$225,000,000</span>
+                      </div>
+                    </div>
+
+                    <div class="sim-grid">
+                      <div class="sim-stat highlight-green">
+                        <span class="label">Net Spread Profit</span>
+                        <span class="value" id="sim-spread-profit">$251,000,000</span>
+                      </div>
+                      <div class="sim-stat highlight-blue">
+                        <span class="label">Projected Default Costs</span>
+                        <span class="value" id="sim-default-costs">$76,500,000</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 4: Business Narratives -->
+          <div id="subproduct-analytics-narratives" class="subproduct-panel">
+            <div class="card">
+              <h3>Multi-Channel Business Narratives</h3>
+              <p class="card-subtitle">Business Narratives converts analytical findings into business-friendly communication by generating executive summaries, analytical storytelling, contextual explanations, and insight narratives. The application bridges the gap between analytical work and business communication by helping analytics professionals communicate findings clearly, consistently, and effectively to stakeholders.</p>
+              
+              <div class="row-layout">
+                <div class="card-column">
+                  <div class="narratives-form">
+                    <div class="form-group">
+                      <label>Target Audience Channel:</label>
+                      <select id="narrative-channel">
+                        <option value="slack">Slack Notification thread</option>
+                        <option value="board">Executive Board Pack Document</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Target Metric Context:</label>
+                      <input type="text" id="narrative-metric-name" value="CAC surge">
+                    </div>
+                    <div class="form-group">
+                      <label>Metric Value:</label>
+                      <input type="text" id="narrative-value" value="175">
+                    </div>
+                    <div class="form-group">
+                      <label>Growth Rate (%):</label>
+                      <input type="text" id="narrative-growth" value="23.2">
+                    </div>
+                    <div class="form-group">
+                      <label>Primary Driver identified:</label>
+                      <input type="text" id="narrative-driver" value="US Ad campaigns">
+                    </div>
+                    <button class="btn" id="generate-narrative-btn">Format Story</button>
+                  </div>
+                </div>
+
+                <div class="card-column">
+                  <div class="result-card bg-light" style="height: 380px; overflow-y: auto;">
+                    <h5>Channel preview output</h5>
+                    <div id="narrative-output-channel" class="markdown-preview" style="white-space: pre-wrap; font-family: monospace; font-size: 13px; margin-top: 12px;">
+                      Formatted story will emerge here...
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 4. WORKFLOW AUTOMATION SUITE (4 PRODUCTS) -->
+        <!-- ========================================== -->
+        <section id="page-automation" class="page-view">
+          <div class="suite-header">
+            <h2>Workflow Automation Workspace</h2>
+            <p>Design trigger-based pipelines, sequence orchestrations, and check approval gates.</p>
+          </div>
+
+          <div class="suite-tabs">
+            <button class="tab-btn active" onclick="switchSubProduct('automation', 'design')">Workflow Design</button>
+            <button class="tab-btn" onclick="switchSubProduct('automation', 'orchestration')">Workflow Orchestration</button>
+            <button class="tab-btn" onclick="switchSubProduct('automation', 'approvals')">Task Automation (Approvals)</button>
+            <button class="tab-btn" onclick="switchSubProduct('automation', 'monitor')">Monitoring Telemetry</button>
+          </div>
+
+          <!-- Product 1 & 2: Design & Orchestration -->
+          <div id="subproduct-automation-design" class="subproduct-panel active">
+            <div class="row-layout">
+              <div class="card-column">
+                <div class="card">
+                  <h3>Workflow Design Console</h3>
+                  <p class="card-subtitle">Workflow Design provides users with the ability to define analytics processes, execution steps, dependencies, review checkpoints, and operational sequences in a structured manner. It creates repeatable analytical operating models that reduce process inconsistency and improve execution reliability across analytical organizations.</p>
+                  
+                  <div class="builder-box">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                      <label>Workflow Name:</label>
+                      <input type="text" id="design-wf-name" value="Executive Profit Check Alert">
+                    </div>
+                    <div class="builder-step">
+                      <span class="step-num">1</span>
+                      <div class="step-details">
+                        <label>Trigger Event:</label>
+                        <select id="design-trigger">
+                          <option value="dataset_uploaded">New Dataset Ingestion</option>
+                          <option value="weekly_schedule">Weekly Cron execution</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="connector-line">↓</div>
+                    <div class="builder-step">
+                      <span class="step-num">2</span>
+                      <div class="step-details">
+                        <label>Capability Task:</label>
+                        <select id="design-task">
+                          <option value="profile">Run Anomaly Z-Score Profiling</option>
+                          <option value="summarize">Run Context Summarization</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="connector-line">↓</div>
+                    <div class="builder-step">
+                      <span class="step-num">3</span>
+                      <div class="step-details">
+                        <label>MCP Notification:</label>
+                        <select id="design-notification">
+                          <option value="slack">Slack alert bridge</option>
+                          <option value="pagerduty">PagerDuty Incident incident</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 16px; display: flex; align-items: center; gap: 8px;">
+                      <input type="checkbox" id="design-require-approval">
+                      <label for="design-require-approval" class="bold" style="font-size: 13px; text-transform: none;">Require Human Analyst approval before notifications</label>
+                    </div>
+
+                    <button class="btn w-100" id="design-run-btn" style="margin-top: 16px;">Compile & Run pipeline</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Product 2: Orchestration Tracker -->
+              <div class="card-column">
+                <div class="card">
+                  <h3>Workflow Orchestration Tracker</h3>
+                  <p class="card-subtitle">Workflow Orchestration coordinates execution across analytical activities by managing dependencies, sequencing tasks, coordinating capability invocation, handling execution flow, and ensuring activities occur in the correct order. The objective is to improve operational efficiency by transforming disconnected analytical tasks into structured execution pipelines.</p>
+                  
+                  <div class="orchestrator-console" id="design-console" style="height: 250px;">
+                    <div class="console-message system">Awaiting pipeline trigger execution...</div>
+                  </div>
+
+                  <div class="wf-visual-steps hide" id="design-visual-tracker">
+                    <div class="v-step" id="dv-step-1">
+                      <span class="v-dot"></span> Trigger Fired
+                    </div>
+                    <div class="v-line"></div>
+                    <div class="v-step" id="dv-step-2">
+                      <span class="v-dot"></span> Capability Task
+                    </div>
+                    <div class="v-line"></div>
+                    <div class="v-step" id="dv-step-3">
+                      <span class="v-dot"></span> Outbound Alert
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 3: Task Automation (Approvals) -->
+          <div id="subproduct-automation-approvals" class="subproduct-panel">
+            <div class="card">
+              <div class="row-layout" style="align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                <h3>In-flight Approval Routing Console</h3>
+                <button class="btn btn-secondary btn-sm" id="approvals-refresh-btn">Fetch Pending Approvals</button>
+              </div>
+              <p class="card-subtitle">Task Automation automates repetitive analytical activities that commonly consume analyst time, including scheduling, routing, approvals, notifications, repetitive validation steps, and execution triggers. By reducing operational burden, the application allows analytics professionals to focus more on manual process management.</p>
+              
+              <div class="approvals-feed" id="approvals-list-feed">
+                <div class="placeholder-msg">All pipelines currently stable. No pending approvals gates flagged.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 4: Monitoring Telemetry -->
+          <div id="subproduct-automation-monitor" class="subproduct-panel">
+            <div class="card">
+              <h3>System Observability & Monitoring</h3>
+              <p class="card-subtitle">Monitoring provides visibility into analytics workflow execution by tracking process health, execution status, completion progress, bottlenecks, failures, and operational alerts. The objective is to improve transparency and operational awareness so analytics teams can identify issues early and maintain execution quality.</p>
+              
+              <div class="pulse-stats-grid" id="monitor-stats-grid">
+                <div class="pulse-stat">
+                  <span class="label">Total Invocations</span>
+                  <span class="value" id="mon-stat-total">--</span>
+                </div>
+                <div class="pulse-stat">
+                  <span class="label">Success Rate</span>
+                  <span class="value" id="mon-stat-success">--</span>
+                </div>
+                <div class="pulse-stat">
+                  <span class="label">Average Latency</span>
+                  <span class="value" id="mon-stat-latency">--</span>
+                </div>
+                <div class="pulse-stat">
+                  <span class="label">Aggregate Token Cost</span>
+                  <span class="value" id="mon-stat-cost">--</span>
+                </div>
+              </div>
+
+              <div class="chart-box" style="margin-top: 24px;">
+                <h4>Capability Latency Telemetry (Live bar spec)</h4>
+                <div id="monitor-chart"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 5. DATA SCIENCE & ML SUITE (4 PRODUCTS) -->
+        <!-- ========================================== -->
+        <section id="page-data-science" class="page-view">
+          <div class="suite-header">
+            <h2>Data Science & ML Workspace</h2>
+            <p>Governed model experimentation, validation feature preparation, and Concept Drift tracking dashboards.</p>
+          </div>
+
+          <div class="suite-tabs">
+            <button class="tab-btn active" onclick="switchSubProduct('data-science', 'prep')">Data Preparation</button>
+            <button class="tab-btn" onclick="switchSubProduct('data-science', 'develop')">Model Development</button>
+            <button class="tab-btn" onclick="switchSubProduct('data-science', 'document')">Model Documentation</button>
+            <button class="tab-btn" onclick="switchSubProduct('data-science', 'pulse')">Model Pulse</button>
+          </div>
+
+          <!-- Product 1: Data Prep -->
+          <div id="subproduct-data-science-prep" class="subproduct-panel active">
+            <div class="card">
+              <h3>KMS-Aligned Data Preparation</h3>
+              <p class="card-subtitle">Data Preparation supports creation of analytics-ready and model-ready datasets by providing capabilities such as profiling, transformation, validation, feature preparation, quality assessment, and dataset structuring. The objective is to reduce time spent preparing data and improve consistency in analytical asset development.</p>
+              
+              <button class="btn btn-secondary" id="ds-prep-run-btn">Run Feature Prep Profile</button>
+
+              <div class="prep-results hide" id="ds-prep-results-panel">
+                <p>Columns profiled: <span class="bold" id="ds-prep-count"></span></p>
+                <div class="prep-table-wrapper" id="ds-prep-table"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 2: Model Development -->
+          <div id="subproduct-data-science-develop" class="subproduct-panel">
+            <div class="card">
+              <h3>Model Development Experiments Registry</h3>
+              <p class="card-subtitle">Model Development provides a structured environment for building statistical and machine learning assets through experimentation, model training, evaluation, tuning, and comparative assessment. The application supports analytical asset creation by enabling repeatable model development processes while maintaining consistency across model lifecycle activities.</p>
+              
+              <button class="btn btn-secondary" id="ds-develop-run-btn">Fetch Experiments List</button>
+
+              <div class="develop-results hide" id="ds-develop-results-panel" style="margin-top: 16px;">
+                <p>Champion training run identified: <span class="badge" id="ds-develop-champion"></span></p>
+                <div class="table-wrapper" style="margin-top: 12px;">
+                  <table class="prism-table" id="ds-develop-table">
+                    <!-- Dynamic runs row -->
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 3: Model Documentation -->
+          <div id="subproduct-data-science-document" class="subproduct-panel">
+            <div class="card">
+              <h3>Automated Model Documentation</h3>
+              <p class="card-subtitle">Model Documentation automatically creates structured documentation artifacts associated with analytical models, including metadata, assumptions, methodology explanations, feature descriptions, validation details, performance summaries, and governance information. The objective is to improve transparency, maintainability, and operational understanding of analytical assets.</p>
+              
+              <div class="row-layout">
+                <div class="card-column">
+                  <div class="document-form">
+                    <div class="form-group">
+                      <label>Register Model ID:</label>
+                      <input type="text" id="doc-model-id" value="forecast_sales_v1">
+                    </div>
+                    <div class="form-group">
+                      <label>Inference Framework:</label>
+                      <select id="doc-framework">
+                        <option value="scikit-learn">Scikit-learn (RandomForest)</option>
+                        <option value="xgboost">XGBoost (Regressor)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Champion Training Run:</label>
+                      <input type="text" id="doc-champion-run" value="run_opt_003">
+                    </div>
+                    <button class="btn" id="ds-document-run-btn">Generate Compliance Booklet</button>
+                  </div>
+                </div>
+
+                <div class="card-column">
+                  <div class="result-card bg-light" style="height: 350px; overflow-y: auto;">
+                    <h5>Markdown governance booklet</h5>
+                    <div id="ds-document-preview" class="markdown-preview" style="background-color: #ffffff; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 12px; margin-top: 12px;">
+                      Governance document compiles here...
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 4: Model Pulse -->
+          <div id="subproduct-data-science-pulse" class="subproduct-panel">
+            <div class="card">
+              <h3>Model Pulse Performance Audit</h3>
+              <p class="card-subtitle">Model Pulse performs periodic validation and health assessment of analytical models by monitoring performance trends, stability indicators, validation metrics, drift conditions, and model quality over time. Rather than treating models as static assets, the application ensures analytical assets remain reliable, monitored, and operationally trustworthy throughout their lifecycle.</p>
+              
+              <button class="btn" id="ds-pulse-run-btn">Scan Performance Drift</button>
+
+              <div class="pulse-results hide" id="ds-pulse-results-panel">
+                <div class="drift-badge-box" id="ds-pulse-drift-alert">
+                  <h4 id="ds-pulse-drift-title">Drift Status: --</h4>
+                  <p id="ds-pulse-drift-desc">--</p>
+                </div>
+
+                <div class="pulse-stats-grid">
+                  <div class="pulse-stat">
+                    <span class="label">Average Latency</span>
+                    <span class="value" id="ds-pulse-avg-latency">--</span>
+                  </div>
+                  <div class="pulse-stat">
+                    <span class="label">Calculated Drift Score</span>
+                    <span class="value" id="ds-pulse-drift-score">--</span>
+                  </div>
+                </div>
+
+                <div class="chart-box" style="margin-top: 16px;">
+                  <h4>Production Accuracy Timeline (Line spec)</h4>
+                  <div id="ds-pulse-chart"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 6. KMS WORKSPACE VIEW -->
+        <!-- ========================================== -->
+        <section id="page-kms" class="page-view">
+          <div class="suite-header">
+            <h2>KMS Institutional Knowledge Workspace</h2>
+            <p>Explore metrics glossary definitions, business definitions, and playbooks in the central knowledge layer.</p>
+          </div>
+
+          <div class="card">
+            <div class="kms-search-bar">
+              <input type="text" id="kms-search-input" placeholder="Search metric schemas (e.g. revenue, profit, CAC, Drift, playbook)...">
+              <button class="btn" id="kms-search-btn">Query KMS</button>
+            </div>
+
+            <div class="kms-explorer-results" id="kms-results-box">
+              <div class="placeholder-msg">Type a search term above to explore the central KMS directory.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 7. CAPABILITY REGISTRY VIEW -->
+        <!-- ========================================== -->
+        <section id="page-registry" class="page-view">
+          <div class="suite-header">
+            <h2>Intelligence Registry: Active Shared Capabilities</h2>
+            <p>Every modular suite workflow in AIP calls this registry, confirming optimal capability reuse and modular architecture.</p>
+          </div>
+
+          <div class="card">
+            <h3>Registered Capability List</h3>
+            <p class="card-subtitle">Displays stateless atomic schemas and parameters currently loaded in `/capabilities/`.</p>
+            
+            <div class="registry-grid" id="registry-capabilities-list">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 8. EXECUTION AUDIT LOGS VIEW -->
+        <!-- ========================================== -->
+        <section id="page-logs" class="page-view">
+          <div class="suite-header">
+            <h2>System Audit Logs Tracker</h2>
+            <p>Validates the strict segregation between suites and capabilities. Every task invocation writes a trace here.</p>
+          </div>
+
+          <div class="card">
+            <div class="logs-header-row">
+              <h3>Runtime Traces Audit Log</h3>
+              <button class="btn btn-secondary" id="clear-logs-btn">Clear Logs</button>
+            </div>
+            
+            <div class="logs-table-wrapper">
+              <table class="logs-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Capability Invoked</th>
+                    <th>Executed By Agent</th>
+                    <th>API Key Used</th>
+                    <th>Execution Duration</th>
+                    <th>Status</th>
+                    <th>Details Payload</th>
+                  </tr>
+                </thead>
+                <tbody id="logs-table-body">
+                  <tr>
+                    <td colspan="7" class="text-center">No trace items logged yet. Run workflow tasks to generate logs.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>

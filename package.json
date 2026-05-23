@@ -1,0 +1,16 @@
+{
+  "name": "aim-intelligence-platform",
+  "version": "1.0.0",
+  "description": "Unified Analytics Intelligence Platform MVP",
+  "main": "platform-core/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node platform-core/server.js",
+    "dev": "node platform-core/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
