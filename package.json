@@ -5,8 +5,8 @@
   "main": "platform-core/server.js",
   "type": "module",
   "scripts": {
-    "start": "node platform-core/server.js",
-    "dev": "node platform-core/server.js"
+    "start": "bash ./start.sh",
+    "dev": "bash ./start.sh"
   },
   "dependencies": {
     "cors": "^2.8.5",
