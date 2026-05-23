@@ -57,14 +57,7 @@
     <aside class="sidebar">
       <div class="sidebar-brand">
         <span class="brand-logo">▲</span>
-        <span class="brand-text">AIP Portal</span>
-      </div>
-      
-      <!-- Secure API Key Console -->
-      <div class="api-key-console">
-        <label for="api-key-input">🔒 Banking API Key:</label>
-        <input type="password" id="api-key-input" placeholder="AIP-BANK-..." />
-        <span class="api-key-status" id="api-key-status-indicator">🔴 Disconnected</span>
+        <span class="brand-text">AIM Intelligence Platform</span>
       </div>
       
       <nav class="sidebar-nav">
@@ -88,12 +81,6 @@
         <a href="#" class="nav-item" data-page="kms">
           <span class="nav-icon">📚</span> KMS Workspace
         </a>
-        <a href="#" class="nav-item" data-page="registry">
-          <span class="nav-icon">⚙️</span> Shared Capabilities
-        </a>
-        <a href="#" class="nav-item" data-page="logs">
-          <span class="nav-icon">📜</span> System Audit Logs
-        </a>
       </nav>
       
       <div class="sidebar-footer">
@@ -112,10 +99,7 @@
       
       <!-- Shared Header -->
       <header class="app-header">
-        <div class="header-search">
-          <input type="text" id="global-search-input" placeholder="Search metric glossary, terms, playbooks...">
-          <button id="global-search-btn">Search KMS</button>
-        </div>
+        <div></div>
         <div class="header-status">
           <span class="status-indicator"></span> Platform Core: Operational
         </div>
@@ -127,7 +111,7 @@
           <div class="lock-card">
             <span class="lock-icon">🔒</span>
             <h3>Banking Agentic OS Locked</h3>
-            <p>Authorization Required: Enter a Bearer Token starting with <code>AIP-</code> in the Sidebar to authorize specialized Banking AI Agents and enable live ledger simulations.</p>
+            <p>Authorization Required: Please authenticate through the login gate to initialize specialized Banking AI Agents.</p>
           </div>
         </div>
 
@@ -191,7 +175,7 @@
 
           <div class="suite-tabs">
             <button class="tab-btn active" onclick="switchSubProduct('reporting', 'prism')">PRISM (Rationalize)</button>
-            <button class="tab-btn" onclick="switchSubProduct('reporting', 'builder')">Report Building</button>
+            <button class="tab-btn" onclick="switchSubProduct('reporting', 'builder')">Reporting</button>
             <button class="tab-btn" onclick="switchSubProduct('reporting', 'bi')">Conversational BI</button>
             <button class="tab-btn" onclick="switchSubProduct('reporting', 'proactive')">Proactive Insights</button>
           </div>
@@ -307,40 +291,7 @@
           <iframe src="/ui/kms/" class="subproduct-iframe" style="height: calc(100vh - 160px);"></iframe>
         </section>
 
-        <!-- ========================================== -->
-        <!-- 7. SHARED CAPABILITIES VIEW -->
-        <!-- ========================================== -->
-        <section id="page-registry" class="page-view">
-          <div class="card">
-            <h3>Registered Analytical Capabilities</h3>
-            <p class="desc">Centralized router detailing specifications of all core capabilities running inside the intelligence gateway.</p>
-            
-            <div class="table-wrapper">
-              <table class="prism-table" id="registry-table-body">
-                <!-- Dynamic capability items -->
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <!-- ========================================== -->
-        <!-- 8. SYSTEM AUDIT LOGS VIEW -->
-        <!-- ========================================== -->
-        <section id="page-logs" class="page-view">
-          <div class="card">
-            <div class="row-layout" style="align-items: center; justify-content: space-between; margin-bottom: 16px;">
-              <h3>Central Intelligence Trace Telemetry Logs</h3>
-              <button class="btn btn-secondary btn-sm" id="clear-logs-btn">Purge Logs Audits</button>
-            </div>
-            <p class="desc">Auditable capability execution events tracing the calling agent persona and the masked credentials.</p>
-            
-            <div class="table-wrapper">
-              <table class="prism-table" id="logs-table-body">
-                <!-- Loaded dynamically -->
-              </table>
-            </div>
-          </div>
-        </section>
+        <!-- Remove Shared capabilities and System audit logs pages -->
 
       </div>
     </main>

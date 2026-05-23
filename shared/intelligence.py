@@ -18,7 +18,7 @@ from typing import Callable, Dict, Any, List, Optional
 # Holds: {'agent': str, 'api_key': str}
 active_agent_context: ContextVar[Dict[str, str]] = ContextVar(
     'active_agent_context',
-    default={'agent': 'Orchestration Supervisor Agent', 'api_key': ''}
+    default={'agent': 'Platform Routing Agent', 'api_key': ''}
 )
 
 # ==========================================================================
@@ -80,7 +80,7 @@ async def invoke_capability(name: str, input_params: Dict[str, Any]) -> Any:
 
     start_time = time.time()
     context = active_agent_context.get()
-    current_agent = context.get('agent', 'Orchestration Supervisor Agent')
+    current_agent = context.get('agent', 'Platform Routing Agent')
     print(f"[Intelligence] Invoking capability: {name} (Executing Agent: {current_agent})")
 
     try:
@@ -119,7 +119,7 @@ def list_capabilities() -> List[Dict[str, Any]]:
 def log_execution(capability: str, input_params: Dict[str, Any], output_params: Dict[str, Any], duration_ms: int, status: str):
     """Audits and logs a capability execution run."""
     context = active_agent_context.get()
-    calling_agent = context.get('agent', 'Orchestration Supervisor Agent')
+    calling_agent = context.get('agent', 'Platform Routing Agent')
     api_key = context.get('api_key', '')
 
     # Mask API Key (e.g. AIP-BANK-SECURE-2026 -> AIP-BA***)

@@ -78,10 +78,10 @@ FastAPI routes are grouped under `/api/v1` and protected by security middleware:
 | `/auth/login` | `POST` | Public | Authenticates analyst, returns session token |
 | `/lms/query` | `GET` | Analyst | Queries active LMS ledger arrays |
 | `/knowledge/search` | `GET` | Grounding Agent | Searches KMS glossary playbooks |
-| `/capabilities` | `GET` | Supervisor | Lists active registered modules |
-| `/capabilities/invoke`| `POST` | Supervisor | Dynamically triggers a stateless task |
-| `/execution-logs` | `GET` | Supervisor | Retrieves audit trail trace telemetry |
-| `/execution-logs` | `DELETE`| Supervisor | Purges trace audit databases |
+| `/capabilities` | `GET` | Platform Routing | Lists active registered modules |
+| `/capabilities/invoke`| `POST` | Platform Routing | Dynamically triggers a stateless task |
+| `/execution-logs` | `GET` | Platform Routing | Retrieves audit trail trace telemetry |
+| `/execution-logs` | `DELETE`| Platform Routing | Purges trace audit databases |
 | `/workflows/reporting/prism-lite` | `POST` | PRISM Agent | Audits report query overlap metrics |
 | `/workflows/reporting/build` | `POST` | Builder Agent | Renders dynamic HTML reports from LMS |
 | `/workflows/reporting/conversational-bi`| `POST` | BI Agent | Answers NLQ grounded in formulas |

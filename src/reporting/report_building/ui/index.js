@@ -200,6 +200,7 @@ async function handleStep1() {
             
             // Render the complex KPI, ER and schemas in step 2 for Human Audit
             renderStep2Data(latestStepData);
+            renderAgentDecisions(2, latestStepData.agentDecisions);
             
             currentStep = 2;
             updateStepUI();
@@ -238,16 +239,19 @@ async function handleCheckpoint(stepApproved) {
                 // Step 2 Approved, Render Step 3 (Transformed SQL summaries)
                 const pre = document.getElementById('step3-sql-data');
                 pre.innerText = JSON.stringify(latestStepData.transformedData, null, 2);
+                renderAgentDecisions(3, latestStepData.agentDecisions);
                 currentStep = 3;
             } else if (stepApproved === 3) {
                 // Step 3 Approved, Render Step 4 (Data schema JSON)
                 const pre = document.getElementById('step4-schema-json');
                 pre.innerText = JSON.stringify(latestStepData.schema, null, 2);
+                renderAgentDecisions(4, latestStepData.agentDecisions);
                 currentStep = 4;
             } else if (stepApproved === 4) {
                 // Step 4 Approved, Render Step 5 (Visual CSS/HTML scaffolding)
                 const pre = document.getElementById('step5-skeleton-html');
                 pre.innerText = latestStepData.skeletonHtml;
+                renderAgentDecisions(5, latestStepData.agentDecisions);
                 currentStep = 5;
             } else if (stepApproved === 5) {
                 // Step 5 Approved, Report Published, Render Step 6 compliance panel
@@ -380,15 +384,19 @@ async function handleFeedbackSubmission(step) {
             // Render updated contents depending on step
             if (step === 2) {
                 renderStep2Data(latestStepData);
+                renderAgentDecisions(2, latestStepData.agentDecisions);
             } else if (step === 3) {
                 const pre = document.getElementById('step3-sql-data');
                 pre.innerText = JSON.stringify(latestStepData.transformedData, null, 2);
+                renderAgentDecisions(3, latestStepData.agentDecisions);
             } else if (step === 4) {
                 const pre = document.getElementById('step4-schema-json');
                 pre.innerText = JSON.stringify(latestStepData.schema, null, 2);
+                renderAgentDecisions(4, latestStepData.agentDecisions);
             } else if (step === 5) {
                 const pre = document.getElementById('step5-skeleton-html');
                 pre.innerText = latestStepData.skeletonHtml;
+                renderAgentDecisions(5, latestStepData.agentDecisions);
             }
             alert(`Step ${step} updated successfully with feedback!`);
         } else {
@@ -438,4 +446,36 @@ async function loadPublishedReportsList() {
     } catch(err) {
         grid.innerHTML = `<div style="color:red; font-size:12px; padding:10px;">Load failed: ${err.message}</div>`;
     }
+}
+
+// ==========================================================
+// 🤖 RENDERING MULTI-AGENT CONSENSUS DECISIONS LOG PANEL
+// ==========================================================
+function renderAgentDecisions(step, agentDecisions) {
+    const box = document.getElementById(`agent-decisions-${step}`);
+    if (!box) return;
+    
+    if (!agentDecisions || agentDecisions.length === 0) {
+        box.style.display = 'none';
+        return;
+    }
+    
+    box.style.display = 'block';
+    box.innerHTML = `
+        <h4>🤖 Multi-Agent Decisions Dashboard</h4>
+        ${agentDecisions.map(d => `
+            <div class="agent-decision-item">
+                <div>
+                    <span class="agent-badge">${d.agent}</span>
+                    <span style="font-weight:700; color:${d.status.includes('Signed') || d.status === 'Approved' ? 'var(--success-color)' : 'var(--accent-color)'}; font-size:10px;">
+                        [${d.status.toUpperCase()}]
+                    </span>
+                    <span style="font-weight:600; font-size:12px; color:#1e293b;">${d.decision}</span>
+                </div>
+                <div class="agent-rationale">
+                    <strong>Rationale:</strong> ${d.rationale}
+                </div>
+            </div>
+        `).join('')}
+    `;
 }

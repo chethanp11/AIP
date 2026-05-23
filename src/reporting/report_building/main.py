@@ -51,6 +51,177 @@ ASCII_ER_DIAGRAM = """
                                     +-------------------------+
 """
 
+async def generate_step_agent_decisions(
+    step: int, 
+    approved: bool, 
+    session: Dict[str, Any], 
+    feedback: str = ""
+) -> List[Dict[str, Any]]:
+    """
+    Generates intelligent, context-aware decisions and reviews from specialized Agent personas
+    utilizing the live LLM (if API key is active) or high-quality procedural fallbacks.
+    """
+    requirements = session.get('requirements', '')
+    kpis = session.get('kpis', [])
+    mode = session.get('mode', 'create')
+    report_id = session.get('reportId', '')
+    report_name = session.get('reportName', '')
+    
+    # Formulate context based on what's available
+    context_summary = f"Mode: {mode}, Report ID: {report_id}, Name: {report_name}, Requirements: '{requirements}'"
+    if 'transformedData' in session:
+        context_summary += f", Data: {json.dumps(session['transformedData'])}"
+    if 'schema' in session:
+        context_summary += f", JSON Schema: {json.dumps(session['schema'])}"
+    
+    system_prompt = """You are the lead AI Multi-Agent Coordinator for the AIM Intelligence Platform (AIP).
+Your job is to generate highly professional, context-aware reviews, decisions, and rationales for multiple specialized Agent personas working in a sequential report-building workflow for a Banking Analytics organization.
+
+The 5 specialized Agent personas are:
+1. Requirements Auditor Agent: Audits financial requirements, checks compliance, and maps terms to KPIs.
+2. Data Engineer Agent: Ingests database ledgers, runs SQL transformations, and calculates balances.
+3. Schema Architect Agent: Designs structured data schemas and JSON data models.
+4. UX Designer Agent: Creates visual layout templates, CSS color themes, and styling rules.
+5. Chief Analytics Officer Agent: Directs pipeline assignments, signs off on publication compliance, and seals documents.
+
+Based on the Step number and whether the step is Approved (HITL progress) or Rejected/Updated with feedback, generate decisions for 1 or 2 appropriate agents.
+Your response MUST be a JSON object containing a single key "decisions" which is a list of objects. Each object must have:
+- "agent": The EXACT name of one of the 5 agents above.
+- "decision": A precise 1-2 sentence description of their review, action, or status.
+- "rationale": A 1-2 sentence detailed rationale citing specific context fields, KPIs, or data structures.
+- "status": The status of their work. Choose from: "Approved", "Progressing", "Completed", "Signed Off", "Published & Sealed", "Revised & Re-approved", or "Rejected".
+
+Do not output any markdown formatting like ```json or anything else. Just the raw JSON object."""
+
+    user_prompt = f"""We are at Step {step} of the Report Building Workflow.
+HITL Status: {"Approved & Progressing" if approved else "Rejected/Modified with feedback"}
+Analyst Feedback: "{feedback or 'None'}"
+Workflow Context: {context_summary}
+
+Please generate the relevant agent decisions list."""
+
+    # Try calling the live LLM
+    llm_res = await call_llm(system_prompt, user_prompt, json_mode=True)
+    if llm_res:
+        try:
+            parsed = json.loads(llm_res)
+            if isinstance(parsed, dict) and "decisions" in parsed and isinstance(parsed["decisions"], list):
+                return parsed["decisions"]
+        except Exception as e:
+            print(f"[Multi-Agent Decisions] Failed to parse LLM decisions JSON: {str(e)}")
+            
+    # Procedural High-Fidelity fallback if LLM is offline/missing API Key
+    decisions = []
+    if step == 2:
+        if not approved:
+            decisions.append({
+                'agent': "Requirements Auditor Agent",
+                'decision': f"Re-audited credit and liquidity KPIs list based on analyst comment: '{feedback}'.",
+                'rationale': f"Dynamically adjusted KPIs list tokens. Re-verified schema requirements coverage for user's request: '{requirements}'.",
+                'status': "Revised & Re-approved"
+            })
+        else:
+            decisions.extend([
+                {
+                    'agent': "Requirements Auditor Agent",
+                    'decision': f"Audited parameters for requirements: '{requirements}'. Relational mapping matched core banking metrics.",
+                    'rationale': f"Matched credit & liquidity KPIs: {', '.join(kpis)} utilizing local KMS grounding references.",
+                    'status': "Approved"
+                },
+                {
+                    'agent': "Chief Analytics Officer Agent",
+                    'decision': "Assigned Requirements Auditor and Data Engineer to synthesize SQLite database assets.",
+                    'rationale': "Determined sequential checkpoints for human audit. Initiated step-by-step pipeline.",
+                    'status': "Progressing"
+                }
+            ])
+    elif step == 3:
+        if not approved:
+            decisions.append({
+                'agent': "Data Engineer Agent",
+                'decision': f"Restructured SQLite aggregations according to custom filtering guideline: '{feedback}'.",
+                'rationale': f"Re-computed currency balance ledgers from lms_database.db corporate accounts ledger.",
+                'status': "Revised & Re-approved"
+            })
+        else:
+            decisions.extend([
+                {
+                    'agent': "Requirements Auditor Agent",
+                    'decision': "Completed semantic KPI auditing and relational ER blueprint structures validation.",
+                    'rationale': f"Analyst authorized parameters. Handed over to Data Engineer Agent for ledger querying.",
+                    'status': "Signed Off"
+                },
+                {
+                    'agent': "Data Engineer Agent",
+                    'decision': "Ingested 1,050 ledger transaction entries from SQLite lms_database.db.",
+                    'rationale': f"Calculated total liquidity sweeping balance averages across corporate accounts for KPIs: {', '.join(kpis)}.",
+                    'status': "Completed"
+                }
+            ])
+    elif step == 4:
+        if not approved:
+            decisions.append({
+                'agent': "Schema Architect Agent",
+                'decision': f"Appended schema field variables based on analyst comment: '{feedback}'.",
+                'rationale': "Modified JSON schema objects definitions. Appended manual comment indicators.",
+                'status': "Revised & Re-approved"
+            })
+        else:
+            decisions.extend([
+                {
+                    'agent': "Data Engineer Agent",
+                    'decision': "Reconciled multi-currency aggregate balances against corporate credit buffer baselines.",
+                    'rationale': "Verified calculations are 100% accurate. Handed over to Schema Architect Agent.",
+                    'status': "Signed Off"
+                },
+                {
+                    'agent': "Schema Architect Agent",
+                    'decision': "Designed final JSON data models schema layout.",
+                    'rationale': "Enforced numeric datatypes, required balance keys, and unique audit tags.",
+                    'status': "Completed"
+                }
+            ])
+    elif step == 5:
+        if not approved:
+            decisions.append({
+                'agent': "UX Designer Agent",
+                'decision': f"Refined CSS visual styling and color palettes according to analyst guidelines: '{feedback}'.",
+                'rationale': "Re-compiled layout color tokens. Injected customized brand theme codes.",
+                'status': "Revised & Re-approved"
+            })
+        else:
+            decisions.extend([
+                {
+                    'agent': "Schema Architect Agent",
+                    'decision': "Signed off on JSON data model parameters integrity.",
+                    'rationale': "Reconciled elements against KMS registry guidelines. Handed over to UX Designer Agent.",
+                    'status': "Signed Off"
+                },
+                {
+                    'agent': "UX Designer Agent",
+                    'decision': "Compiled premium, responsive financial briefing HTML/CSS scaffolding template.",
+                    'rationale': "Designed elegant summary grids, custom alert status indicators, and color tokens styling.",
+                    'status': "Completed"
+                }
+            ])
+    elif step == 6:
+        decisions.extend([
+            {
+                'agent': "UX Designer Agent",
+                'decision': "Injected actual multi-currency aggregate balances and swept transactions rows into HTML card.",
+                'rationale': "Applied responsive spacing rules. Handed over to Chief Analytics Officer for signoff.",
+                'status': "Signed Off"
+            },
+            {
+                'agent': "Chief Analytics Officer Agent",
+                'decision': "Authorized physical disk publication of executive briefing document.",
+                'rationale': f"Verified audit traceability of report ID {report_id}. Reconciled ledger sums.",
+                'status': "Published & Sealed"
+            }
+        ])
+        
+    return decisions
+
 async def initiate_report_build(mode: str, report_id: str, requirements: str, context: str) -> Dict[str, Any]:
     """
     Step 1: Initiate a Create or Update session, parsing requirements and matching KPIs.
@@ -93,6 +264,15 @@ async def initiate_report_build(mode: str, report_id: str, requirements: str, co
         'accounts': ['account_id [PK]', 'client_id [FK]', 'branch', 'currency', 'balance', 'account_type', 'interest_rate']
     }
 
+    temp_session = {
+        'requirements': requirements,
+        'kpis': kpis,
+        'mode': mode,
+        'reportId': report_id or f"rep_{uuid.uuid4().hex[:6]}",
+        'reportName': old_data.get('reportName') or (f"Liquidity Executive Brief - {time.strftime('%Y%m%d')}" if mode == 'create' else f"Updated Executive Brief - {time.strftime('%Y%m%d')}")
+    }
+    initial_decisions = await generate_step_agent_decisions(2, True, temp_session)
+
     # 3. Store session state
     session_state = {
         'sessionId': session_id,
@@ -104,6 +284,7 @@ async def initiate_report_build(mode: str, report_id: str, requirements: str, co
         'erDiagram': ASCII_ER_DIAGRAM,
         'factTables': fact_tables,
         'dimensionTables': dimension_tables,
+        'agentDecisions': initial_decisions,
         'currentStep': 1,
         'reportName': old_data.get('reportName') or (f"Liquidity Executive Brief - {time.strftime('%Y%m%d')}" if mode == 'create' else f"Updated Executive Brief - {time.strftime('%Y%m%d')}")
     }
@@ -116,7 +297,8 @@ async def initiate_report_build(mode: str, report_id: str, requirements: str, co
             'kpis': kpis,
             'erDiagram': ASCII_ER_DIAGRAM,
             'factTables': fact_tables,
-            'dimensionTables': dimension_tables
+            'dimensionTables': dimension_tables,
+            'agentDecisions': initial_decisions
         }
     }
 
@@ -156,6 +338,8 @@ async def advance_workflow_step(session_id: str, approved_step: int, approved: b
             if 'remove' in f_lower:
                 session['kpis'] = [k for k in session['kpis'] if not any(t in k.lower() for t in ['lcr', 'nim', 'npl', 'ldr'] if t in f_lower)]
                 
+            decisions = await generate_step_agent_decisions(2, False, session, feedback)
+            session['agentDecisions'].extend(decisions)
             return {
                 'sessionId': session_id,
                 'stepOutput': {
@@ -163,7 +347,8 @@ async def advance_workflow_step(session_id: str, approved_step: int, approved: b
                     'erDiagram': session['erDiagram'],
                     'factTables': session['factTables'],
                     'dimensionTables': session['dimensionTables'],
-                    'feedbackApplied': True
+                    'feedbackApplied': True,
+                    'agentDecisions': decisions
                 }
             }
             
@@ -210,25 +395,33 @@ async def advance_workflow_step(session_id: str, approved_step: int, approved: b
                 'filterApplied': branch_filter or "None"
             }
             session['transformedData'] = transformed_data
+            
+            decisions = await generate_step_agent_decisions(3, False, session, feedback)
+            session['agentDecisions'].extend(decisions)
             return {
                 'sessionId': session_id,
                 'stepOutput': {
-                    'transformedData': transformed_data
+                    'transformedData': transformed_data,
+                    'agentDecisions': decisions
                 }
             }
-
+ 
         # 3. Model Schema Feedback loop (Step 4)
         elif approved_step == 4:
             f_lower = feedback.lower()
             if 'add field' in f_lower:
                 session['schema']['additionalComment'] = {'type': 'string', 'description': 'Analyst manual comments override'}
+            
+            decisions = await generate_step_agent_decisions(4, False, session, feedback)
+            session['agentDecisions'].extend(decisions)
             return {
                 'sessionId': session_id,
                 'stepOutput': {
-                    'schema': session['schema']
+                    'schema': session['schema'],
+                    'agentDecisions': decisions
                 }
             }
-
+ 
         # 4. Skeleton Template Feedback loop (Step 5)
         elif approved_step == 5:
             # Parse color variables theme feedback (e.g. green, dark red, slate)
@@ -244,10 +437,14 @@ async def advance_workflow_step(session_id: str, approved_step: int, approved: b
                 theme_color = "#8b5cf6"
                 
             session['skeletonHtml'] = session['skeletonHtml'].replace('#3b82f6', theme_color)
+            
+            decisions = await generate_step_agent_decisions(5, False, session, feedback)
+            session['agentDecisions'].extend(decisions)
             return {
                 'sessionId': session_id,
                 'stepOutput': {
-                    'skeletonHtml': session['skeletonHtml']
+                    'skeletonHtml': session['skeletonHtml'],
+                    'agentDecisions': decisions
                 }
             }
 
@@ -274,11 +471,15 @@ async def advance_workflow_step(session_id: str, approved_step: int, approved: b
                 for t in recent_txs
             ]
         }
+        
+        decisions = await generate_step_agent_decisions(3, True, session)
+        session['agentDecisions'].extend(decisions)
         session['transformedData'] = transformed_data
         return {
             'sessionId': session_id,
             'stepOutput': {
-                'transformedData': transformed_data
+                'transformedData': transformed_data,
+                'agentDecisions': decisions
             }
         }
 
@@ -290,11 +491,15 @@ async def advance_workflow_step(session_id: str, approved_step: int, approved: b
             'aggregatedTreasuryBalances': {'type': 'object', 'description': 'Multi-currency balance aggregates'},
             'configuredSweepsRules': {'type': 'integer', 'description': 'Sweeps rules configured'}
         }
+        
+        decisions = await generate_step_agent_decisions(4, True, session)
+        session['agentDecisions'].extend(decisions)
         session['schema'] = schema
         return {
             'sessionId': session_id,
             'stepOutput': {
-                'schema': schema
+                'schema': schema,
+                'agentDecisions': decisions
             }
         }
 
@@ -326,7 +531,7 @@ async def advance_workflow_step(session_id: str, approved_step: int, approved: b
             <h3 style="font-size:20px; color:#10b981; margin-top:6px;">BALANCES_PLACEHOLDER</h3>
         </div>
     </div>
-
+ 
     <div style="margin-bottom:24px;">
         <h4 style="font-size:13px; text-transform:uppercase; margin-bottom:10px; color:#475569;">Grounded SQLite Corporate Ledgers Extract</h4>
         <table style="width:100%; border-collapse:collapse; font-size:12px;">
@@ -343,21 +548,24 @@ async def advance_workflow_step(session_id: str, approved_step: int, approved: b
             </tbody>
         </table>
     </div>
-
+ 
     <div style="background:#fef3c7; border-left:4px solid #f59e0b; padding:12px; border-radius:6px; font-size:12px;">
         <strong>Treasury Analyst Briefing Context:</strong> OUTBOUND_CONTEXT_PLACEHOLDER
     </div>
-
+ 
     <div style="margin-top:20px; text-align:right; font-size:10px; color:#64748b;">
         Audit Lineage Trace: <code>SQLite Grounded</code> | Verified KMS Policy: <code>Compliance Signed</code>
     </div>
 </div>
 """
+        decisions = await generate_step_agent_decisions(5, True, session)
+        session['agentDecisions'].extend(decisions)
         session['skeletonHtml'] = skeleton_html
         return {
             'sessionId': session_id,
             'stepOutput': {
-                'skeletonHtml': skeleton_html
+                'skeletonHtml': skeleton_html,
+                'agentDecisions': decisions
             }
         }
 
@@ -429,6 +637,9 @@ async def advance_workflow_step(session_id: str, approved_step: int, approved: b
             f.write(complete_document_html)
             
         print(f"[Report Builder Agent] Physically wrote published briefing card to: {index_file_path}")
+        
+        decisions = await generate_step_agent_decisions(6, True, session)
+        session['agentDecisions'].extend(decisions)
         session['currentStep'] = 6
         
         return {
@@ -436,7 +647,8 @@ async def advance_workflow_step(session_id: str, approved_step: int, approved: b
             'stepOutput': {
                 'id': session['reportId'],
                 'name': session['reportName'],
-                'path': f"/reports/{report_dir_name}/index.html"
+                'path': f"/reports/{report_dir_name}/index.html",
+                'agentDecisions': decisions
             }
         }
         

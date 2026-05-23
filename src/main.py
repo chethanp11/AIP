@@ -102,6 +102,7 @@ async def context_and_auth_middleware(request: Request, call_next):
         or path.startswith("/index.")
         or path.startswith("/static")
         or path == "/api/v1/auth/login"
+        or path == "/api/v1/auth/sme-login"
         or not path.startswith("/api/v1")
     ):
         return await call_next(request)
@@ -119,7 +120,7 @@ async def context_and_auth_middleware(request: Request, call_next):
         )
 
     # Map endpoint paths to calling Agent personae (telemetry grounding)
-    agent_name = "Orchestration Supervisor Agent"
+    agent_name = "Platform Routing Agent"
     if "/workflows/reporting/conversational-bi" in path:
         agent_name = "Conversational BI Agent"
     elif "/workflows/reporting/build" in path:
@@ -169,16 +170,33 @@ async def login(payload: Dict[str, Any]):
     username = payload.get('username')
     password = payload.get('password')
     
-    if username == 'analyst' and password == 'password':
+    user = authenticate_kms_user(username, password, required_role='Analyst')
+    if user:
         session_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=9))
         secure_token = f"AIP-ANALYST-SESSION-{session_suffix}"
         print(f"[Auth Success] Authenticated Analyst. Issued secure session token: {secure_token}")
-        return {'success': True, 'token': secure_token, 'role': 'Analyst'}
-    else:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid analyst credentials. Standard: analyst / password"
-        )
+        return {'success': True, 'token': secure_token, 'role': user['role'], 'clearance': user['clearance']}
+
+    raise HTTPException(
+        status_code=401,
+        detail="Invalid analyst credentials."
+    )
+
+@app.post("/api/v1/auth/sme-login")
+async def sme_login(payload: Dict[str, Any]):
+    username = payload.get('username')
+    password = payload.get('password')
+    user = authenticate_kms_user(username, password, required_role='SME')
+    if user:
+        session_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=9))
+        secure_token = f"AIP-SME-SESSION-{session_suffix}"
+        print(f"[Auth Success] Authenticated SME. Issued secure session token: {secure_token}")
+        return {'success': True, 'token': secure_token, 'role': user['role'], 'clearance': user['clearance']}
+
+    raise HTTPException(
+        status_code=401,
+        detail="Invalid SME credentials."
+    )
 
 # ==========================================================================
 # 📊 LMS DATABASE ROUTE
@@ -201,7 +219,40 @@ async def query_lms(table: str = None):
 # ==========================================================================
 # 📚 KMS KNOWLEDGE ROUTES (SQLite Vector & Graph DB)
 # ==========================================================================
-from src.kms.index import ingest_custom_file_to_kms, search_kms_vector_and_graph
+from src.kms.index import (
+    ingest_custom_file_to_kms,
+    search_kms_vector_and_graph,
+    list_canonical_knowledge,
+    approve_canonical_knowledge,
+    rollback_knowledge_version,
+    get_kms_observability_data,
+    generate_context_package,
+    advanced_retrieval_orchestration,
+    list_source_connectors,
+    list_candidate_knowledge,
+    update_candidate_details,
+    act_on_candidate_knowledge,
+    sync_source_connector,
+    generate_context_zip,
+    get_business_domains_list,
+    get_kms_filter_options,
+    authenticate_kms_user
+)
+
+
+@app.get("/api/v1/kms/domains")
+async def kms_business_domains_list():
+    try:
+        return get_business_domains_list()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/kms/options")
+async def kms_options_list():
+    try:
+        return get_kms_filter_options()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/v1/knowledge/search")
 async def knowledge_search(q: str = ''):
@@ -216,10 +267,14 @@ async def knowledge_context(q: str = ''):
 async def kms_upload_document(payload: Dict[str, Any]):
     filename = payload.get('filename', 'custom_regulation.txt')
     content = payload.get('content', '')
+    owner = payload.get('owner', 'System Ingestion')
+    security_class = payload.get('securityClassification', 'Internal')
+    sme = payload.get('sme', 'Marcus Vance')
+    domain = payload.get('businessDomain', 'Corporate Analytics')
     if not content:
         raise HTTPException(status_code=400, detail="Document content cannot be empty.")
     try:
-        return ingest_custom_file_to_kms(filename, content)
+        return await ingest_custom_file_to_kms(filename, content, owner, security_class, sme, domain)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -235,6 +290,179 @@ async def kms_query_grounding(payload: Dict[str, Any]):
             'matchedNodes': res['matched_nodes'],
             'matchedChunks': res['matched_chunks']
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/kms/connectors")
+async def kms_connectors_list():
+    try:
+        return list_source_connectors()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/kms/connectors")
+async def kms_connectors_create(payload: Dict[str, Any]):
+    import uuid
+    name = payload.get('name')
+    type = payload.get('type')
+    auth = payload.get('authPlaceholder')
+    sync_method = payload.get('syncMethod', 'Manual')
+    owner = payload.get('owner')
+    domain = payload.get('domain')
+    if not name or not type:
+        raise HTTPException(status_code=400, detail="Missing name or type parameter.")
+    try:
+        from src.kms.index import get_kms_db
+        conn = get_kms_db()
+        cursor = conn.cursor()
+        connector_id = "conn_" + uuid.uuid4().hex[:6]
+        cursor.execute("""
+            INSERT INTO source_connectors (connector_id, name, type, auth_placeholder, sync_method, owner, domain, status, error_logs, ingestion_history)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """, (connector_id, name, type, auth, sync_method, owner, domain, 'Active', '', 'Established Connection'))
+        conn.commit()
+        return {'success': True, 'connectorId': connector_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/kms/connectors/sync")
+async def kms_connectors_sync(payload: Dict[str, Any]):
+    connector_id = payload.get('connectorId')
+    if not connector_id:
+        raise HTTPException(status_code=400, detail="Missing connectorId parameter.")
+    try:
+        return await sync_source_connector(connector_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/kms/candidates")
+async def kms_candidates_list():
+    try:
+        return list_candidate_knowledge()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/kms/candidates/edit")
+async def kms_candidates_edit(payload: Dict[str, Any]):
+    candidate_id = payload.get('candidateId')
+    title = payload.get('title')
+    summary = payload.get('summary')
+    domain = payload.get('domain')
+    tags = payload.get('tags')
+    relationships = payload.get('relationships')
+    if not candidate_id:
+        raise HTTPException(status_code=400, detail="Missing candidateId parameter.")
+    try:
+        return update_candidate_details(candidate_id, title, summary, domain, tags, relationships)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/kms/candidates/action")
+async def kms_candidates_action(payload: Dict[str, Any]):
+    candidate_id = payload.get('candidateId')
+    status = payload.get('status')
+    comments = payload.get('comments', '')
+    if not candidate_id or not status:
+        raise HTTPException(status_code=400, detail="Missing candidateId or status parameters.")
+    try:
+        return act_on_candidate_knowledge(candidate_id, status, comments)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/kms/canonical")
+async def kms_canonical_list():
+    try:
+        return list_canonical_knowledge()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/kms/approve")
+async def kms_approve_knowledge(payload: Dict[str, Any]):
+    knowledge_id = payload.get('knowledgeId')
+    approved = payload.get('approved', False)
+    if not knowledge_id:
+        raise HTTPException(status_code=400, detail="Missing knowledgeId parameter.")
+    try:
+        return approve_canonical_knowledge(knowledge_id, approved)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/kms/rollback")
+async def kms_rollback_knowledge(payload: Dict[str, Any]):
+    knowledge_id = payload.get('knowledgeId')
+    if not knowledge_id:
+        raise HTTPException(status_code=400, detail="Missing knowledgeId parameter.")
+    try:
+        return rollback_knowledge_version(knowledge_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/kms/observability")
+async def kms_observability_metrics():
+    try:
+        return get_kms_observability_data()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/kms/context-package")
+async def kms_context_package(payload: Dict[str, Any]):
+    query = payload.get('query', '')
+    user_role = payload.get('userRole', 'Analyst')
+    clearance = payload.get('clearance', 'Internal')
+    if not query:
+        raise HTTPException(status_code=400, detail="Query string cannot be empty.")
+    try:
+        return generate_context_package(query, user_role, clearance)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/kms/query-advanced")
+async def kms_query_advanced(payload: Dict[str, Any]):
+    query = payload.get('query', '')
+    user_role = payload.get('userRole', 'Analyst')
+    clearance = payload.get('clearance', 'Internal')
+    limit = payload.get('limit', 4)
+    search_mode = payload.get('searchMode', 'Hybrid')
+    filters = payload.get('filters', {})
+    if not query:
+        raise HTTPException(status_code=400, detail="Query string cannot be empty.")
+    try:
+        res = advanced_retrieval_orchestration(query, user_role, clearance, limit, search_mode, filters)
+        return {
+            'groundedContext': res['context'],
+            'matchedNodes': res['matched_nodes'],
+            'matchedChunks': res['matched_chunks'],
+            'agentTraces': res['agent_traces'],
+            'contradictions': res['contradictions'],
+            'missingContext': res['missing_context'],
+            'latencyMs': res['latency_ms']
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/kms/retriever/download")
+async def kms_retriever_download(payload: Dict[str, Any]):
+    query = payload.get('query', '')
+    user_role = payload.get('userRole', 'Analyst')
+    clearance = payload.get('clearance', 'Internal')
+    if not query:
+        raise HTTPException(status_code=400, detail="Query string cannot be empty.")
+    try:
+        res = advanced_retrieval_orchestration(query, user_role, clearance)
+        pkg = generate_context_package(query, user_role, clearance)
+        zip_data = generate_context_zip(query, res, pkg)
+        
+        from fastapi.responses import Response
+        import urllib.parse
+        safe_filename = urllib.parse.quote(f"context_pack_{query[:15].replace(' ', '_')}.zip")
+        return Response(
+            content=zip_data,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f"attachment; filename={safe_filename}",
+                "Access-Control-Expose-Headers": "Content-Disposition"
+            }
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

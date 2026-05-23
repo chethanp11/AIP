@@ -5,7 +5,6 @@
     <title>Reporting Workspace</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22 fill=%22%233b82f6%22>▲</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="index.css" />
     <style>
         :root {
             --font-display: 'Outfit', sans-serif;
@@ -341,6 +340,56 @@
             margin-right: 6px;
             margin-bottom: 6px;
         }
+
+        /* 🤖 Multi-Agent Decisions Dashboard Visual Styles */
+        .agent-decisions-box {
+            background: #f0fdfa; /* light teal */
+            border: 1px solid #5eead4;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .agent-decisions-box h4 {
+            color: #0f766e;
+            font-family: var(--font-display);
+            font-size: 13px;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+        }
+        .agent-decision-item {
+            border-bottom: 1px dashed #ccfbf1;
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        .agent-decision-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+        .agent-badge {
+            background: #0f766e;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .agent-rationale {
+            color: #475569;
+            font-size: 11px;
+            margin-top: 2px;
+            padding-left: 12px;
+            border-left: 2px solid #cbd5e1;
+        }
     </style>
 </head>
 <body>
@@ -422,6 +471,10 @@
                     <div class="step-panel" id="panel-2">
                         <h3>Step 2: KPIs & Grounded Relational ER Models</h3>
                         <p class="desc">The Agent parsed your instructions and matched credit/liquidity metrics with detailed data blueprints.</p>
+                        
+                        <!-- 🤖 Multi-Agent Decisions Dashboard -->
+                        <div class="agent-decisions-box" id="agent-decisions-2"></div>
+                        
                         <div class="review-container" style="max-height: 250px;">
                             <div class="review-title">Matched Core KPIs:</div>
                             <div id="step2-kpis-list" style="margin-bottom:12px;"></div>
@@ -448,6 +501,10 @@
                     <div class="step-panel" id="panel-3">
                         <h3>Step 3: Perform Data Transformation</h3>
                         <p class="desc">Agent running SQL aggregate statements on SQLite transactions database tables.</p>
+                        
+                        <!-- 🤖 Multi-Agent Decisions Dashboard -->
+                        <div class="agent-decisions-box" id="agent-decisions-3"></div>
+                        
                         <div class="review-container">
                             <div class="review-title">Transformed SQLite Summary:</div>
                             <pre id="step3-sql-data" style="font-size:11px; white-space:pre-wrap;"></pre>
@@ -468,6 +525,10 @@
                     <div class="step-panel" id="panel-4">
                         <h3>Step 4: Create Report Data Model</h3>
                         <p class="desc">The Agent structures the parsed accounts and sweeps information into a structured model.</p>
+                        
+                        <!-- 🤖 Multi-Agent Decisions Dashboard -->
+                        <div class="agent-decisions-box" id="agent-decisions-4"></div>
+                        
                         <div class="review-container">
                             <div class="review-title">Data Schema Definition:</div>
                             <pre id="step4-schema-json" style="font-size:11px; white-space:pre-wrap;"></pre>
@@ -488,6 +549,10 @@
                     <div class="step-panel" id="panel-5">
                         <h3>Step 5: Create Visual HTML Report Skeleton</h3>
                         <p class="desc">The Agent compiles a premium responsive HTML skeleton outline complete with styling sheets.</p>
+                        
+                        <!-- 🤖 Multi-Agent Decisions Dashboard -->
+                        <div class="agent-decisions-box" id="agent-decisions-5"></div>
+                        
                         <div class="review-container">
                             <div class="review-title">Visual CSS/HTML Scaffolding:</div>
                             <pre id="step5-skeleton-html" style="font-size:10px; color:#0f172a; white-space:pre-wrap;"></pre>

@@ -1,6 +1,6 @@
 """
 Product 10: Workflow Orchestration Engine (Stateful Agentic AI)
-Assigned Banking Agent: Orchestration Supervisor Agent
+Assigned Banking Agent: Platform Routing Agent
 """
 
 import random
