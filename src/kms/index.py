@@ -36,44 +36,239 @@ class KMSQueryResponse(BaseModel):
 _postgres_conn = None
 _graph_conn = None
 
+from src.shared.config import config
+from src.shared.infra.postgres_client import PostgresClient
+from src.shared.infra.neo4j_client import Neo4jClient
+from psycopg2.extras import RealDictCursor
+from datetime import datetime
+
+class RowWrapper:
+    def __init__(self, dict_row):
+        self._data = dict_row
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            keys = list(self._data.keys())
+            if 0 <= key < len(keys):
+                return self._data[keys[key]]
+            raise IndexError(f"Tuple index {key} out of range")
+        return self._data.get(key)
+
+    def keys(self):
+        return self._data.keys()
+
+    def values(self):
+        return self._data.values()
+
+    def __repr__(self):
+        return str(self._data)
+
+class PostgresCursorWrapper:
+    def __init__(self, pg_cursor, neo4j_client):
+        self.cursor = pg_cursor
+        self.neo4j = neo4j_client
+        self.results = None
+
+    def execute(self, sql, params=None):
+        sql_pg = sql.replace('?', '%s')
+        sql_upper = sql.upper().strip()
+        
+        if "ATTACH DATABASE" in sql_upper:
+            return
+            
+        if "SELECT * FROM GRAPH_NODES WHERE NODE_ID =" in sql_upper or "SELECT * FROM GRAPH_NODES WHERE NODE_ID=" in sql_upper:
+            node_id = params[0]
+            records = self.neo4j.execute_query(
+                "MATCH (n:Node {node_id: $node_id}) RETURN n.node_id AS node_id, n.type AS type, n.title AS title, n.content AS content, n.metadata AS metadata",
+                {"node_id": node_id}
+            )
+            self._set_mock_results(records)
+            return
+
+        if "SELECT N.* FROM GRAPH_NODES N" in sql_upper and "GRAPH_EDGES E" in sql_upper:
+            node_id = params[0]
+            records = self.neo4j.execute_query(
+                "MATCH (s:Node {node_id: $node_id})-[r]-(neighbor:Node) "
+                "RETURN neighbor.node_id AS node_id, neighbor.type AS type, "
+                "neighbor.title AS title, neighbor.content AS content, neighbor.metadata AS metadata",
+                {"node_id": node_id}
+            )
+            self._set_mock_results(records)
+            return
+
+        if "INSERT OR REPLACE INTO GRAPH_NODES" in sql_upper:
+            node_id, type_val, title, content, metadata = params
+            self.neo4j.execute_query(
+                "MERGE (n:Node {node_id: $node_id}) "
+                "SET n.type = $type, n.title = $title, n.content = $content, n.metadata = $metadata",
+                {"node_id": node_id, "type": type_val, "title": title, "content": content, "metadata": metadata}
+            )
+            self._set_mock_results([])
+            return
+
+        if "INSERT OR REPLACE INTO GRAPH_EDGES" in sql_upper or "INSERT INTO GRAPH_EDGES" in sql_upper:
+            edge_id, source_id, target_id, relationship, metadata = params
+            self.neo4j.execute_query(
+                "MATCH (s:Node {node_id: $source_id}), (t:Node {node_id: $target_id}) "
+                "MERGE (s)-[r:RELATION {edge_id: $edge_id}]->(t) "
+                "SET r.relationship = $relationship, r.metadata = $metadata",
+                {"edge_id": edge_id, "source_id": source_id, "target_id": target_id, "relationship": relationship, "metadata": metadata}
+            )
+            self._set_mock_results([])
+            return
+
+        if "INSERT OR REPLACE INTO" in sql_upper:
+            tokens = sql_upper.split()
+            idx = tokens.index("INTO")
+            table_name = tokens[idx + 1].lower().strip('(').strip()
+            
+            PK_MAP = {
+                'canonical_knowledge': 'knowledge_id',
+                'candidate_knowledge': 'candidate_id',
+                'security_audit_logs': 'log_id',
+                'governance_approvals': 'approval_id',
+                'source_connectors': 'connector_id',
+                'business_terms': 'term',
+                'metrics_glossary': 'id',
+                'analytical_templates': 'id',
+                'knowledge_articles': 'title',
+                'kms_users': 'username',
+                'business_domains': 'domain_id'
+            }
+            pk_col = PK_MAP.get(table_name)
+            if pk_col and params:
+                pk_val = params[0]
+                try:
+                    self.cursor.execute(f"DELETE FROM {table_name} WHERE {pk_col} = %s", (pk_val,))
+                except Exception:
+                    pass
+            sql_pg = sql_pg.replace("INSERT OR REPLACE INTO", "INSERT INTO")
+
+        if params is not None:
+            self.cursor.execute(sql_pg, params)
+        else:
+            self.cursor.execute(sql_pg)
+        self.results = None
+
+    def executemany(self, sql, params_list):
+        sql_pg = sql.replace('?', '%s')
+        sql_upper = sql.upper().strip()
+
+        if "INSERT OR REPLACE INTO GRAPH_EDGES" in sql_upper:
+            for params in params_list:
+                edge_id, source_id, target_id, relationship, metadata = params
+                self.neo4j.execute_query(
+                    "MATCH (s:Node {node_id: $source_id}), (t:Node {node_id: $target_id}) "
+                    "MERGE (s)-[r:RELATION {edge_id: $edge_id}]->(t) "
+                    "SET r.relationship = $relationship, r.metadata = $metadata",
+                    {"edge_id": edge_id, "source_id": source_id, "target_id": target_id, "relationship": relationship, "metadata": metadata}
+                )
+            return
+
+        if "INSERT OR REPLACE INTO" in sql_upper:
+            tokens = sql_upper.split()
+            idx = tokens.index("INTO")
+            table_name = tokens[idx + 1].lower().strip('(').strip()
+            
+            PK_MAP = {
+                'canonical_knowledge': 'knowledge_id',
+                'candidate_knowledge': 'candidate_id',
+                'security_audit_logs': 'log_id',
+                'governance_approvals': 'approval_id',
+                'source_connectors': 'connector_id',
+                'business_terms': 'term',
+                'metrics_glossary': 'id',
+                'analytical_templates': 'id',
+                'knowledge_articles': 'title',
+                'kms_users': 'username',
+                'business_domains': 'domain_id'
+            }
+            pk_col = PK_MAP.get(table_name)
+            if pk_col and params_list:
+                for params in params_list:
+                    pk_val = params[0]
+                    try:
+                        self.cursor.execute(f"DELETE FROM {table_name} WHERE {pk_col} = %s", (pk_val,))
+                    except Exception:
+                        pass
+            sql_pg = sql_pg.replace("INSERT OR REPLACE INTO", "INSERT INTO")
+
+        self.cursor.executemany(sql_pg, params_list)
+
+    def _set_mock_results(self, records):
+        self.results = [RowWrapper(r) for r in records]
+
+    def fetchone(self):
+        if self.results is not None:
+            if len(self.results) > 0:
+                return self.results.pop(0)
+            return None
+        row = self.cursor.fetchone()
+        if row is not None:
+            return RowWrapper(dict(row))
+        return None
+
+    def fetchall(self):
+        if self.results is not None:
+            res = self.results
+            self.results = None
+            return res
+        rows = self.cursor.fetchall()
+        return [RowWrapper(dict(r)) for r in rows]
+
+    def close(self):
+        self.cursor.close()
+
+class PostgresConnectionWrapper:
+    def __init__(self, pg_client):
+        self.client = pg_client
+        self.conn = pg_client.get_connection()
+        self.neo4j = Neo4jClient()
+
+    def cursor(self):
+        cursor = self.conn.cursor(cursor_factory=RealDictCursor)
+        return PostgresCursorWrapper(cursor, self.neo4j)
+
+    def commit(self):
+        self.conn.commit()
+
+    def rollback(self):
+        self.conn.rollback()
+
+    def close(self):
+        self.conn.close()
+
+def log_ingestion_activity(msg: str):
+    """Outputs timestamps and messages cleanly to the externalized log file."""
+    log_dir = config.LOG_PATH
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, 'ingestion.log')
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    with open(log_file, 'a', encoding='utf-8') as f:
+        f.write(f"[{timestamp}] {msg}\n")
+    print(f"[Ingestion Log] {msg}")
+
 def get_kms_data_paths() -> Dict[str, str]:
-    """Ensures directories exist and returns absolute paths for local postgres, graph, and staging storage."""
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
-    knowledge_dir = os.path.join(project_root, 'knowledge')
-    data_dir = os.path.join(base_dir, 'data') # keep staging and logs inside app data for operational isolation
-    
+    """Ensures directories exist and returns absolute paths for staging and storage."""
     paths = {
-        'knowledge_dir': knowledge_dir,
-        'vector_db': os.path.join(data_dir, 'vector_db'),
-        'graph_db': os.path.join(data_dir, 'graph_db'),
-        'metadata_db': os.path.join(data_dir, 'metadata_db'),
-        'ingestion_staging': os.path.join(data_dir, 'ingestion_staging'),
-        'ingestion_logs': os.path.join(data_dir, 'ingestion_logs'),
+        'ingestion_staging': os.path.join(config.ARTIFACT_PATH, 'staging'),
+        'ingestion_logs': config.LOG_PATH,
     }
-    
-    os.makedirs(knowledge_dir, exist_ok=True)
     os.makedirs(paths['ingestion_staging'], exist_ok=True)
     os.makedirs(paths['ingestion_logs'], exist_ok=True)
-    
     return paths
 
 def get_postgres_db():
-    """Initializes and returns the connection to the postgres relational database in AIP/knowledge/."""
+    """Initializes and returns the connection to the postgres relational database via psycopg2 wrapper."""
     global _postgres_conn
     if _postgres_conn is None:
-        paths = get_kms_data_paths()
-        db_path = os.path.join(paths['knowledge_dir'], 'knowledge_postgres.db')
-        
-        _postgres_conn = sqlite3.connect(db_path, check_same_thread=False)
-        _postgres_conn.row_factory = sqlite3.Row
-        
+        _postgres_conn = PostgresConnectionWrapper(PostgresClient())
         cursor = _postgres_conn.cursor()
         
         # Create Vector Chunk Table
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS vector_chunks (
-            chunk_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chunk_id SERIAL PRIMARY KEY,
             node_id TEXT NOT NULL,
             chunk_text TEXT NOT NULL,
             tokens TEXT NOT NULL
@@ -92,10 +287,10 @@ def get_postgres_db():
             business_domain TEXT NOT NULL,
             tags TEXT,
             confidence REAL NOT NULL,
-            approval_status TEXT NOT NULL, -- 'Draft', 'Pending Review', 'Approved', 'Rejected', 'Published', 'Retired'
+            approval_status TEXT NOT NULL,
             version INTEGER NOT NULL,
             freshness_date TEXT NOT NULL,
-            security_classification TEXT NOT NULL, -- 'Public', 'Internal', 'Confidential', 'Restricted'
+            security_classification TEXT NOT NULL,
             source_traceability TEXT,
             lineage TEXT,
             superseded_by TEXT,
@@ -130,7 +325,7 @@ def get_postgres_db():
         # Observability Metrics table
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS observability_metrics (
-            metric_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            metric_id SERIAL PRIMARY KEY,
             timestamp TEXT NOT NULL,
             metric_name TEXT NOT NULL,
             value REAL NOT NULL,
@@ -149,7 +344,7 @@ def get_postgres_db():
             last_sync_timestamp TEXT,
             owner TEXT,
             domain TEXT,
-            status TEXT NOT NULL, -- 'Active', 'Error', 'Disconnected'
+            status TEXT NOT NULL,
             error_logs TEXT,
             ingestion_history TEXT
         );
@@ -177,7 +372,7 @@ def get_postgres_db():
             duplicate_score REAL NOT NULL,
             conflict_warning TEXT,
             freshness_score REAL NOT NULL,
-            review_status TEXT NOT NULL, -- 'Draft', 'Pending Review', 'Approved', 'Rejected', 'Needs Clarification', 'Published'
+            review_status TEXT NOT NULL,
             reviewer_comments TEXT,
             created_timestamp TEXT NOT NULL
         );
@@ -236,10 +431,8 @@ def get_postgres_db():
             display_name TEXT NOT NULL
         );
         """)
-        
         _postgres_conn.commit()
         
-        # Seed local users if empty. This is dev-only credential storage for the local AIP demo.
         cursor.execute("SELECT COUNT(*) FROM kms_users;")
         if cursor.fetchone()[0] == 0:
             cursor.executemany("INSERT INTO kms_users VALUES (?, ?, ?, ?, ?);", [
@@ -248,7 +441,6 @@ def get_postgres_db():
             ])
             _postgres_conn.commit()
 
-        # Seed domains if empty
         cursor.execute("SELECT COUNT(*) FROM business_domains;")
         if cursor.fetchone()[0] == 0:
             lob_domains = [
@@ -263,59 +455,46 @@ def get_postgres_db():
 
         base_dir = os.path.abspath(os.path.dirname(__file__))
 
-        # Seed business terms if empty
         cursor.execute("SELECT COUNT(*) FROM business_terms;")
         if cursor.fetchone()[0] == 0:
             json_path = os.path.join(base_dir, 'business_terms.json')
             if os.path.exists(json_path):
                 with open(json_path, 'r') as f:
                     terms = json.load(f)
-                    cursor.executemany("INSERT OR REPLACE INTO business_terms VALUES (?, ?);", 
+                    cursor.executemany("INSERT INTO business_terms VALUES (?, ?);", 
                                        [(t['term'], t['definition']) for t in terms])
                     _postgres_conn.commit()
 
-        # Seed metrics glossary if empty
         cursor.execute("SELECT COUNT(*) FROM metrics_glossary;")
         if cursor.fetchone()[0] == 0:
             json_path = os.path.join(base_dir, 'metrics_glossary.json')
             if os.path.exists(json_path):
                 with open(json_path, 'r') as f:
                     metrics = json.load(f)
-                    cursor.executemany("INSERT OR REPLACE INTO metrics_glossary VALUES (?, ?, ?, ?, ?, ?);", 
+                    cursor.executemany("INSERT INTO metrics_glossary VALUES (?, ?, ?, ?, ?, ?);", 
                                        [(m['id'], m['name'], m['description'], m['formula'], m['format'], json.dumps(m['trends'])) for m in metrics])
                     _postgres_conn.commit()
 
-        # Seed analytical templates if empty
         cursor.execute("SELECT COUNT(*) FROM analytical_templates;")
         if cursor.fetchone()[0] == 0:
             json_path = os.path.join(base_dir, 'analytical_templates.json')
             if os.path.exists(json_path):
                 with open(json_path, 'r') as f:
                     templates = json.load(f)
-                    cursor.executemany("INSERT OR REPLACE INTO analytical_templates VALUES (?, ?, ?);", 
+                    cursor.executemany("INSERT INTO analytical_templates VALUES (?, ?, ?);", 
                                        [(t['id'], t['name'], t['structure']) for t in templates])
                     _postgres_conn.commit()
 
-        # Seed knowledge articles if empty
         cursor.execute("SELECT COUNT(*) FROM knowledge_articles;")
         if cursor.fetchone()[0] == 0:
             json_path = os.path.join(base_dir, 'knowledge_articles.json')
             if os.path.exists(json_path):
                 with open(json_path, 'r') as f:
                     articles = json.load(f)
-                    cursor.executemany("INSERT OR REPLACE INTO knowledge_articles VALUES (?, ?, ?);", 
+                    cursor.executemany("INSERT INTO knowledge_articles VALUES (?, ?, ?);", 
                                        [(a['title'], a['category'], a['content']) for a in articles])
                     _postgres_conn.commit()
 
-        # Initialize and ATTACH the Graph Database dynamically
-        get_graph_db()
-        graph_db_path = os.path.join(paths['knowledge_dir'], 'knowledge_graph.db')
-        
-        # Attach the graph db file to enable unified JOIN syntax
-        cursor.execute("ATTACH DATABASE ? AS graph_db;", (graph_db_path,))
-        _postgres_conn.commit()
-
-        # Seed canonical and graph nodes if empty
         cursor.execute("SELECT COUNT(*) FROM canonical_knowledge;")
         if cursor.fetchone()[0] == 0:
             prepopulate_kms_knowledge(_postgres_conn)
@@ -323,43 +502,10 @@ def get_postgres_db():
     return _postgres_conn
 
 def get_graph_db():
-    """Initializes and returns connection to the graph database in AIP/knowledge/."""
+    """Initializes and returns Neo4j Graph Client connection wrapper."""
     global _graph_conn
     if _graph_conn is None:
-        paths = get_kms_data_paths()
-        db_path = os.path.join(paths['knowledge_dir'], 'knowledge_graph.db')
-        
-        _graph_conn = sqlite3.connect(db_path, check_same_thread=False)
-        _graph_conn.row_factory = sqlite3.Row
-        
-        cursor = _graph_conn.cursor()
-        
-        # Create Graph Nodes Table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS graph_nodes (
-            node_id TEXT PRIMARY KEY,
-            type TEXT NOT NULL,
-            title TEXT NOT NULL,
-            content TEXT NOT NULL,
-            metadata TEXT
-        );
-        """)
-        
-        # Create Graph Edges Table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS graph_edges (
-            edge_id TEXT PRIMARY KEY,
-            source_id TEXT NOT NULL,
-            target_id TEXT NOT NULL,
-            relationship TEXT NOT NULL,
-            metadata TEXT,
-            FOREIGN KEY (source_id) REFERENCES graph_nodes(node_id),
-            FOREIGN KEY (target_id) REFERENCES graph_nodes(node_id)
-        );
-        """)
-        
-        _graph_conn.commit()
-            
+        _graph_conn = Neo4jClient()
     return _graph_conn
 
 def get_kms_db():

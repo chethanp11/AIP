@@ -6,8 +6,9 @@ AIM Intelligence Platform (AIP)
 import os
 import sys
 
-# Ensure workspace root is in python path
+# Ensure workspace root and src/ are in python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 import random
 import string
@@ -637,7 +638,8 @@ async def ds_pulse(payload: Dict[str, Any]):
 # 🌐 MOUNT STATIC FRONTEND PLATFORM CLIENT SHELL & MICRO-FRONTENDS
 # ==========================================================================
 # 1. Mount published HTML report briefing folder at "/reports"
-reports_dir = os.path.abspath('src/reporting/report_building/reports')
+from src.shared.config import config
+reports_dir = config.REPORT_PATH
 os.makedirs(reports_dir, exist_ok=True)
 app.mount("/reports", StaticFiles(directory=reports_dir, html=True), name="reports_pub")
 

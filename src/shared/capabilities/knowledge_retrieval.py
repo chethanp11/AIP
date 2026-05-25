@@ -2,12 +2,10 @@
 Knowledge Retrieval Capability (SQLite Vector & Graph RAG Patched)
 """
 
-import os
-from typing import Dict, Any
-from src.kms.index import search_kms_vector_and_graph
+from src.shared.infra.retrieval_client import RetrievalClient
 
 config = {
-    'description': 'Searches and compiles semantic regulations from the in-memory SQLite Vector & Graph Database.',
+    'description': 'Searches and compiles semantic regulations from the externalized PostgreSQL pgvector and Neo4j Graph databases.',
     'inputSchema': {
         'question': 'string'
     },
@@ -16,6 +14,8 @@ config = {
         'matchesCount': 'number'
     }
 }
+
+_retrieval_client = RetrievalClient()
 
 def handler(input_params: Dict[str, Any]) -> Dict[str, Any]:
     query = (input_params.get('question', '') or '').strip()
@@ -26,8 +26,8 @@ def handler(input_params: Dict[str, Any]) -> Dict[str, Any]:
         }
         
     try:
-        # Trigger live Vector similarity & Graph traversal RAG search!
-        res = search_kms_vector_and_graph(query)
+        # Trigger standard vector & graph RAG search through the Retrieval Service Client!
+        res = _retrieval_client.search(query)
         return {
             'context': res['context'],
             'matchesCount': len(res['matched_chunks'])

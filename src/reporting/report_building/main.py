@@ -17,8 +17,8 @@ ACTIVE_BUILD_SESSIONS: Dict[str, Dict[str, Any]] = {}
 
 def get_reports_dir() -> str:
     """Returns absolute path to physical reports publication folder."""
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    reports_dir = os.path.join(base_dir, 'reports')
+    from src.shared.config import config
+    reports_dir = config.REPORT_PATH
     os.makedirs(reports_dir, exist_ok=True)
     return reports_dir
 
